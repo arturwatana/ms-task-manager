@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientKafka } from '@nestjs/microservices';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ITaskUserRepository } from 'src/tasks/repositories/task-user.repository';
 
@@ -16,9 +16,9 @@ type MessageDTO = {
 export class NotificationTaskUserSchedule {
   constructor(
     private taskRepository: ITaskUserRepository,
-    @Inject('NOTIFICATION') private readonly notificationClient: ClientProxy,
+    @Inject('NOTIFICATION') private readonly notificationClient: ClientKafka,
   ) {}
-  @Cron(CronExpression.EVERY_12_HOURS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async getAllTasksDay() {
     const allTasks = await this.taskRepository.findAllByDay();
     if (allTasks) {
@@ -31,7 +31,8 @@ export class NotificationTaskUserSchedule {
           name: task.user.name,
           title: task.task.title,
         };
-        await this.notificationClient.emit('task_notification', message);
+        console.log('=== enviando notify');
+        await this.notificationClient.emit('tp_task_notification', message);
       });
     }
   }
